@@ -29,7 +29,6 @@ import net.sourceforge.pinyin4j.multipinyin.Trie;
 public class PinyinHelper {
 
     private static final String[] ARR_EMPTY = {};
-    private static final String EMPTY = "";
 
     /**
      * Get all unformmatted Hanyu Pinyin presentations of a single Chinese
@@ -262,7 +261,7 @@ public class PinyinHelper {
         char[] chars = str.toCharArray();
 
         for (int i = 0; i < chars.length; i++) {
-            String result = null;//匹配到的最长的结果
+            String[] pinyinStrArray = null;//匹配到的最长的结果
             char ch = chars[i];
             Trie currentTrie = resource.getUnicodeToHanyuPinyinTable();
             int success = i;
@@ -272,7 +271,7 @@ public class PinyinHelper {
                 currentTrie = currentTrie.get(hexStr);
                 if (currentTrie != null) {
                     if (currentTrie.getPinyin() != null) {
-                        result = currentTrie.getPinyin();
+                        pinyinStrArray = currentTrie.getPinyinArray();
                         success = current;
                     }
                     currentTrie = currentTrie.getNextTire();
@@ -285,10 +284,9 @@ public class PinyinHelper {
             }
             while (currentTrie != null);
 
-            if (result == null) {//如果在前缀树中没有匹配到，那么它就不能转换为拼音，直接输出或者去掉
+            if (pinyinStrArray == null) {//如果在前缀树中没有匹配到，那么它就不能转换为拼音，直接输出或者去掉
                 if (retain) resultPinyinStrBuf.append(chars[i]);
             } else {
-                String[] pinyinStrArray = resource.parsePinyinString(result);
                 if (pinyinStrArray != null) {
                     for (int j = 0; j < pinyinStrArray.length; j++) {
                         resultPinyinStrBuf.append(PinyinFormatter.formatHanyuPinyin(pinyinStrArray[j], outputFormat));

@@ -1,7 +1,8 @@
 package net.sourceforge.pinyin4j.multipinyin;
 
 import java.io.*;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by 刘一波 on 16/3/4.
@@ -9,18 +10,41 @@ import java.util.Hashtable;
  */
 public class Trie {
 
-    private Hashtable<String, Trie> values = new Hashtable<String, Trie>();//本节点包含的值
+    private Map<String, Trie> values = null;//本节点包含的值
 
-    private String pinyin;//本节点的拼音
+    private String[] pinyinArray;//本节点的拼音
 
     private Trie nextTire;//下一个节点,也就是匹配下一个字符
 
+    static public Trie ROOT;
+
+    public Trie(){
+        if(ROOT == null){
+            ROOT = this;
+            values = new HashMap<String, Trie>(20904);//根节点减少扩容次数
+        }
+    }
+
     public String getPinyin() {
-        return pinyin;
+        StringBuilder builder = new StringBuilder("(");
+        for(String pinyin : pinyinArray) {
+            builder.append(pinyin);
+            builder.append(",");
+        }
+        builder.setCharAt(builder.length()-1, ')');
+        return builder.toString();
+    }
+
+    public String[] getPinyinArray() {
+        return pinyinArray;//省掉joiner和parsePinyinString
     }
 
     public void setPinyin(String pinyin) {
-        this.pinyin = pinyin;
+        String[] split = pinyin.substring(1, pinyin.length() - 1).split(",");
+        pinyinArray = new String[split.length];
+        for (int i = 0; i < split.length; i++) {
+            pinyinArray[i] = split[i].intern();
+        }
     }
 
     public Trie getNextTire() {
@@ -49,7 +73,7 @@ public class Trie {
                 if (keyAndValue.length != 2)
                     continue;
                 Trie trie = new Trie();
-                trie.pinyin = keyAndValue[1];
+                trie.setPinyin(keyAndValue[1]);
                 put(keyAndValue[0], trie);
             }
         } finally {
@@ -93,7 +117,7 @@ public class Trie {
                     Trie trie = trieParent.getNextTire();//获取此对象的下一个
 
                     if (keys.length - 1 == i) {//最后一个字了,需要把拼音写进去
-                        trieParent.pinyin = value;
+                        trieParent.setPinyin(value);
                         break;//此行其实并没有意义
                     }
 
@@ -133,10 +157,12 @@ public class Trie {
     }
 
     public Trie get(String hexString) {
+        if(values == null) return null;
         return values.get(hexString);
     }
 
     public void put(String s, Trie trie) {
+        if(values == null) { values = new HashMap<String, Trie>(4); }
         values.put(s, trie);
     }
 }
