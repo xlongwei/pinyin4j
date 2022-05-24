@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public class Trie {
 
-    private Map<String, Trie> values = null;//本节点包含的值
+    private Map<Integer, Trie> values = null;//本节点包含的值
 
     private String[] pinyinArray;//本节点的拼音
 
@@ -21,7 +21,7 @@ public class Trie {
     public Trie(){
         if(ROOT == null){
             ROOT = this;
-            values = new HashMap<String, Trie>(20904);//根节点减少扩容次数
+            values = new HashMap<Integer, Trie>(41594);//根节点减少扩容次数
         }
     }
 
@@ -74,7 +74,7 @@ public class Trie {
                     continue;
                 Trie trie = new Trie();
                 trie.setPinyin(keyAndValue[1]);
-                put(keyAndValue[0], trie);
+                put(Integer.parseInt(keyAndValue[0],16), trie);
             }
         } finally {
             if (inputStreamReader != null)
@@ -107,12 +107,12 @@ public class Trie {
 
                 Trie currentTrie = this;
                 for (int i = 0; i < keys.length; i++) {
-                    String hexString = Integer.toHexString(keys[i]).toUpperCase();
+                    int codePoint = keys[i];
 
-                    Trie trieParent = currentTrie.get(hexString);
+                    Trie trieParent = currentTrie.get(codePoint);
                     if (trieParent == null) {//如果没有此值,直接put进去一个空对象
-                        currentTrie.put(hexString, new Trie());
-                        trieParent = currentTrie.get(hexString);
+                        currentTrie.put(codePoint, new Trie());
+                        trieParent = currentTrie.get(codePoint);
                     }
                     Trie trie = trieParent.getNextTire();//获取此对象的下一个
 
@@ -126,7 +126,8 @@ public class Trie {
                             //不是最后一个字,写入这个字的nextTrie,并匹配下一个
                             Trie subTrie = new Trie();
                             trieParent.setNextTire(subTrie);
-                            subTrie.put(Integer.toHexString(keys[i + 1]).toUpperCase(), new Trie());
+                            codePoint = keys[i + 1];
+                            subTrie.put(codePoint, new Trie());
                             currentTrie = subTrie;
                         }
                     } else {
@@ -156,13 +157,13 @@ public class Trie {
         }
     }
 
-    public Trie get(String hexString) {
+    public Trie get(Integer hexString) {
         if(values == null) return null;
         return values.get(hexString);
     }
 
-    public void put(String s, Trie trie) {
-        if(values == null) { values = new HashMap<String, Trie>(4); }
+    public void put(Integer s, Trie trie) {
+        if(values == null) { values = new HashMap<Integer, Trie>(4); }
         values.put(s, trie);
     }
 }

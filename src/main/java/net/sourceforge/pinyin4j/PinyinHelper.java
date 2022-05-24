@@ -47,12 +47,12 @@ public class PinyinHelper {
      * Chinese character exists in Unicode CJK talbe, however, it has no
      * pronounciation in Chinese
      *
-     * @param ch the given Chinese character
+     * @param codePoint the given Chinese character codePoint
      * @return a String array contains all unformmatted Hanyu Pinyin
      * presentations with tone numbers; null for non-Chinese character
      */
-    static public String[] toHanyuPinyinStringArray(int ch) {
-        return getUnformattedHanyuPinyinStringArray(ch);
+    static public String[] toHanyuPinyinStringArray(int codePoint) {
+        return getUnformattedHanyuPinyinStringArray(codePoint);
     }
 
     /**
@@ -70,7 +70,7 @@ public class PinyinHelper {
      * Chinese character is in Unicode CJK talbe, however, it has no
      * pronounciation in Chinese
      *
-     * @param ch           the given Chinese character
+     * @param codePoint           the given Chinese character codePoint
      * @param outputFormat describes the desired format of returned Hanyu Pinyin String
      * @return a String array contains all Hanyu Pinyin presentations with tone
      * numbers; return empty string for non-Chinese character
@@ -78,23 +78,23 @@ public class PinyinHelper {
      * @see HanyuPinyinOutputFormat
      * @see BadHanyuPinyinOutputFormatCombination
      */
-    static public String[] toHanyuPinyinStringArray(int ch, HanyuPinyinOutputFormat outputFormat)
+    static public String[] toHanyuPinyinStringArray(int codePoint, HanyuPinyinOutputFormat outputFormat)
             throws BadHanyuPinyinOutputFormatCombination {
-        return getFormattedHanyuPinyinStringArray(ch, outputFormat);
+        return getFormattedHanyuPinyinStringArray(codePoint, outputFormat);
     }
 
     /**
      * Return the formatted Hanyu Pinyin representations of the given Chinese
      * character (both in Simplified and Tranditional) in array format.
      *
-     * @param ch           the given Chinese character
+     * @param codePoint           the given Chinese character
      * @param outputFormat Describes the desired format of returned Hanyu Pinyin string
      * @return The formatted Hanyu Pinyin representations of the given codepoint
      * in array format; null if no record is found in the hashtable.
      */
-    static private String[] getFormattedHanyuPinyinStringArray(int ch,
+    static private String[] getFormattedHanyuPinyinStringArray(int codePoint,
                                                                HanyuPinyinOutputFormat outputFormat) throws BadHanyuPinyinOutputFormatCombination {
-        String[] pinyinStrArray = getUnformattedHanyuPinyinStringArray(ch);
+        String[] pinyinStrArray = getUnformattedHanyuPinyinStringArray(codePoint);
 
         if (null != pinyinStrArray) {
 
@@ -111,11 +111,11 @@ public class PinyinHelper {
     /**
      * Delegate function
      *
-     * @param ch the given Chinese character
+     * @param codePoint the given Chinese character
      * @return unformatted Hanyu Pinyin strings; null if the record is not found
      */
-    private static String[] getUnformattedHanyuPinyinStringArray(int ch) {
-        return ChineseToPinyinResource.getInstance().getHanyuPinyinStringArray(ch);
+    private static String[] getUnformattedHanyuPinyinStringArray(int codePoint) {
+        return ChineseToPinyinResource.getInstance().getHanyuPinyinStringArray(codePoint);
     }
 
     /**
@@ -248,7 +248,7 @@ public class PinyinHelper {
             int success = i;
             int current = i;
             do {
-                String hexStr = hexStr(codePoint);
+                Integer hexStr = hexStr(codePoint);
                 currentTrie = currentTrie.get(hexStr);
                 if (currentTrie != null) {
                     if (currentTrie.getPinyin() != null) {
@@ -316,7 +316,7 @@ public class PinyinHelper {
             int success = i;
             int current = i;
             do {
-                String hexStr = hexStr(codePoint);
+                Integer hexStr = hexStr(codePoint);
                 currentTrie = currentTrie.get(hexStr);
                 if (currentTrie != null) {
                     if (currentTrie.getPinyin() != null) {
@@ -353,9 +353,8 @@ public class PinyinHelper {
         return resultPinyinStrBuf.toString();
     }
 
-    private static String hexStr(Integer codePoint) {
-        codePoint = ChineseToPinyinResource.tsMap.getOrDefault(codePoint, codePoint);
-        return Integer.toHexString(codePoint).toUpperCase();
+    private static Integer hexStr(Integer codePoint) {
+        return ChineseToPinyinResource.tsMap.getOrDefault(codePoint, codePoint);
     }
 
     static public int[] toCodePointArray(String str) {

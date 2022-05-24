@@ -95,11 +95,7 @@ class ChineseToPinyinResource {
     }
 
     Trie getHanyuPinyinTrie(int codePoint) {
-
-        String codepointHexStr = Integer.toHexString(codePoint).toUpperCase();
-
-        // fetch from hashtable
-        return getUnicodeToHanyuPinyinTable().get(codepointHexStr);
+        return getUnicodeToHanyuPinyinTable().get(codePoint);
     }
 
     /**
