@@ -16,6 +16,8 @@
 package net.sourceforge.pinyin4j;
 
 import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import net.sourceforge.pinyin4j.multipinyin.Trie;
 
@@ -49,7 +51,7 @@ public class PinyinHelper {
      * @return a String array contains all unformmatted Hanyu Pinyin
      * presentations with tone numbers; null for non-Chinese character
      */
-    static public String[] toHanyuPinyinStringArray(char ch) {
+    static public String[] toHanyuPinyinStringArray(int ch) {
         return getUnformattedHanyuPinyinStringArray(ch);
     }
 
@@ -76,7 +78,7 @@ public class PinyinHelper {
      * @see HanyuPinyinOutputFormat
      * @see BadHanyuPinyinOutputFormatCombination
      */
-    static public String[] toHanyuPinyinStringArray(char ch, HanyuPinyinOutputFormat outputFormat)
+    static public String[] toHanyuPinyinStringArray(int ch, HanyuPinyinOutputFormat outputFormat)
             throws BadHanyuPinyinOutputFormatCombination {
         return getFormattedHanyuPinyinStringArray(ch, outputFormat);
     }
@@ -90,7 +92,7 @@ public class PinyinHelper {
      * @return The formatted Hanyu Pinyin representations of the given codepoint
      * in array format; null if no record is found in the hashtable.
      */
-    static private String[] getFormattedHanyuPinyinStringArray(char ch,
+    static private String[] getFormattedHanyuPinyinStringArray(int ch,
                                                                HanyuPinyinOutputFormat outputFormat) throws BadHanyuPinyinOutputFormatCombination {
         String[] pinyinStrArray = getUnformattedHanyuPinyinStringArray(ch);
 
@@ -112,7 +114,7 @@ public class PinyinHelper {
      * @param ch the given Chinese character
      * @return unformatted Hanyu Pinyin strings; null if the record is not found
      */
-    private static String[] getUnformattedHanyuPinyinStringArray(char ch) {
+    private static String[] getUnformattedHanyuPinyinStringArray(int ch) {
         return ChineseToPinyinResource.getInstance().getHanyuPinyinStringArray(ch);
     }
 
@@ -233,6 +235,53 @@ public class PinyinHelper {
             return ARR_EMPTY;
     }
 
+    static public String[] toHanYuPinyinStringArray(String str, HanyuPinyinOutputFormat outputFormat) throws BadHanyuPinyinOutputFormatCombination {
+        ChineseToPinyinResource resource = ChineseToPinyinResource.getInstance();
+
+        int[] codePoints = toCodePointArray(str);
+        String[] array = new String[codePoints.length];
+
+        for (int i = 0; i < codePoints.length; i++) {
+            String[] pinyinStrArray = null;//匹配到的最长的结果
+            int codePoint = codePoints[i];
+            Trie currentTrie = resource.getUnicodeToHanyuPinyinTable();
+            int success = i;
+            int current = i;
+            do {
+                String hexStr = hexStr(codePoint);
+                currentTrie = currentTrie.get(hexStr);
+                if (currentTrie != null) {
+                    if (currentTrie.getPinyin() != null) {
+                        pinyinStrArray = currentTrie.getPinyinArray();
+                        success = current;
+                    }
+                    currentTrie = currentTrie.getNextTire();
+                }
+                current++;
+                if (current < codePoints.length)
+                    codePoint = codePoints[current];
+                else
+                    break;
+            }
+            while (currentTrie != null);
+
+            if (pinyinStrArray == null) {//如果在前缀树中没有匹配到，那么它就不能转换为拼音，直接输出或者去掉
+                array[i] = new StringBuilder().appendCodePoint(codePoints[i]).toString();
+            } else {
+                if (pinyinStrArray != null) {
+                    for (int j = 0; j < pinyinStrArray.length; j++) {
+                        array[i + j] = (outputFormat==null ? pinyinStrArray[j] : PinyinFormatter.formatHanyuPinyin(pinyinStrArray[j], outputFormat));
+                        if (i == success)
+                            break;
+                    }
+                }
+            }
+            i = success;
+        }
+
+        return array;
+    }
+
     /**
      * Get a string which all Chinese characters are replaced by corresponding
      * main (first) Hanyu Pinyin representation.
@@ -258,16 +307,16 @@ public class PinyinHelper {
         ChineseToPinyinResource resource = ChineseToPinyinResource.getInstance();
         StringBuilder resultPinyinStrBuf = new StringBuilder();
 
-        char[] chars = str.toCharArray();
+        int[] codePoints = toCodePointArray(str);
 
-        for (int i = 0; i < chars.length; i++) {
+        for (int i = 0; i < codePoints.length; i++) {
             String[] pinyinStrArray = null;//匹配到的最长的结果
-            char ch = chars[i];
+            int codePoint = codePoints[i];
             Trie currentTrie = resource.getUnicodeToHanyuPinyinTable();
             int success = i;
             int current = i;
             do {
-                String hexStr = Integer.toHexString((int) ch).toUpperCase();
+                String hexStr = hexStr(codePoint);
                 currentTrie = currentTrie.get(hexStr);
                 if (currentTrie != null) {
                     if (currentTrie.getPinyin() != null) {
@@ -277,21 +326,21 @@ public class PinyinHelper {
                     currentTrie = currentTrie.getNextTire();
                 }
                 current++;
-                if (current < chars.length)
-                    ch = chars[current];
+                if (current < codePoints.length)
+                    codePoint = codePoints[current];
                 else
                     break;
             }
             while (currentTrie != null);
 
             if (pinyinStrArray == null) {//如果在前缀树中没有匹配到，那么它就不能转换为拼音，直接输出或者去掉
-                if (retain) resultPinyinStrBuf.append(chars[i]);
+                if (retain) resultPinyinStrBuf.appendCodePoint(codePoints[i]);
             } else {
                 if (pinyinStrArray != null) {
                     for (int j = 0; j < pinyinStrArray.length; j++) {
-                        resultPinyinStrBuf.append(PinyinFormatter.formatHanyuPinyin(pinyinStrArray[j], outputFormat));
-                        if (current < chars.length || (j < pinyinStrArray.length - 1 && i != success)) {//不是最后一个,(也不是拼音的最后一个,并且不是最后匹配成功的)
-                            resultPinyinStrBuf.append(separate);
+                        resultPinyinStrBuf.append(outputFormat==null ? pinyinStrArray[j] : PinyinFormatter.formatHanyuPinyin(pinyinStrArray[j], outputFormat));
+                        if (current < codePoints.length || (j < pinyinStrArray.length - 1 && i != success)) {//不是最后一个,(也不是拼音的最后一个,并且不是最后匹配成功的)
+                            if(separate!=null) resultPinyinStrBuf.append(separate);
                         }
                         if (i == success)
                             break;
@@ -302,6 +351,25 @@ public class PinyinHelper {
         }
 
         return resultPinyinStrBuf.toString();
+    }
+
+    private static String hexStr(Integer codePoint) {
+        codePoint = ChineseToPinyinResource.tsMap.getOrDefault(codePoint, codePoint);
+        return Integer.toHexString(codePoint).toUpperCase();
+    }
+
+    static public int[] toCodePointArray(String str) {
+        int[] codePointArray = new int[str.codePointCount(0, str.length())];
+        for(int i=0,j=0;i<str.length();i=str.offsetByCodePoints(i, 1)){
+            codePointArray[j++]=str.codePointAt(i);
+        }
+        return codePointArray;
+    }
+
+    static public HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
+    static {
+        defaultFormat.setToneType(HanyuPinyinToneType.WITH_TONE_MARK);
+        defaultFormat.setVCharType(HanyuPinyinVCharType.WITH_U_UNICODE);
     }
 
     // ! Hidden constructor

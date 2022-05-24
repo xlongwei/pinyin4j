@@ -65,7 +65,7 @@ public class Trie {
         BufferedReader bufferedReader = null;
         InputStreamReader inputStreamReader = null;
         try {
-            inputStreamReader = new InputStreamReader(inStream);
+            inputStreamReader = new InputStreamReader(inStream, "UTF-8");
             bufferedReader = new BufferedReader(inputStreamReader);
             String s;
             while ((s = bufferedReader.readLine()) != null) {
@@ -93,7 +93,7 @@ public class Trie {
         BufferedReader bufferedReader = null;
         InputStreamReader inputStreamReader = null;
         try {
-            inputStreamReader = new InputStreamReader(inStream);
+            inputStreamReader = new InputStreamReader(inStream, "UTF-8");
             bufferedReader = new BufferedReader(inputStreamReader);
             String s;
             while ((s = bufferedReader.readLine()) != null) {

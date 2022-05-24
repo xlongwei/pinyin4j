@@ -20,8 +20,12 @@ package net.sourceforge.pinyin4j;
 
 import net.sourceforge.pinyin4j.multipinyin.Trie;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Manage all external resources required in PinyinHelper class.
@@ -29,6 +33,7 @@ import java.io.IOException;
  * @author Li Min (xmlerlimin@gmail.com)
  */
 class ChineseToPinyinResource {
+    static public Map<Integer, Integer> tsMap = new HashMap<Integer, Integer>(4189);
     /**
      * A hash table contains <Unicode, HanyuPinyin> pairs
      */
@@ -62,14 +67,26 @@ class ChineseToPinyinResource {
         try {
             final String resourceName = "/pinyindb/unicode_to_hanyu_pinyin.txt";
             final String resourceMultiName = "/pinyindb/multi_pinyin.txt";
-
+            
             setUnicodeToHanyuPinyinTable(new Trie());
             getUnicodeToHanyuPinyinTable().load(ResourceHelper.getResourceInputStream(resourceName));
-
+            
             getUnicodeToHanyuPinyinTable().loadMultiPinyin(ResourceHelper.getResourceInputStream(resourceMultiName));
-
+            
             getUnicodeToHanyuPinyinTable().loadMultiPinyinExtend();
-
+            
+            final String resourceHoubbPinyin = "/pinyindb/houbb_pinyin.txt";
+            final String resourceHoubbTs = "/pinyindb/houbb_ts.txt";
+            getUnicodeToHanyuPinyinTable().load(ResourceHelper.getResourceInputStream(resourceHoubbPinyin));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(ResourceHelper.getResourceInputStream(resourceHoubbTs), "UTF-8"));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                String[] split = line.split(" ");
+                if (split.length >= 2) {
+                    tsMap.put(split[0].codePointAt(0), split[1].codePointAt(0));
+                }
+            }
+            reader.close();
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         } catch (IOException ex) {
@@ -77,9 +94,9 @@ class ChineseToPinyinResource {
         }
     }
 
-    Trie getHanyuPinyinTrie(char ch) {
+    Trie getHanyuPinyinTrie(int codePoint) {
 
-        String codepointHexStr = Integer.toHexString((int) ch).toUpperCase();
+        String codepointHexStr = Integer.toHexString(codePoint).toUpperCase();
 
         // fetch from hashtable
         return getUnicodeToHanyuPinyinTable().get(codepointHexStr);
@@ -93,7 +110,7 @@ class ChineseToPinyinResource {
      * @return The Hanyu Pinyin strings of the given Chinese character in array
      * format; return null if there is no corresponding Pinyin string.
      */
-    String[] getHanyuPinyinStringArray(char ch) {
+    String[] getHanyuPinyinStringArray(int ch) {
         Trie trie = getHanyuPinyinTrie(ch);
         return trie==null ? null : trie.getPinyinArray();
     }
